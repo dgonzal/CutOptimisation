@@ -20,7 +20,7 @@ public:
   int rebinning(char* format, const char* histo_name){
     PyObject *pName, *pModule, *pDict, *pFunc, *pCall;
     Py_Initialize();
-    pName = PyString_FromString("histogram_rebinning"); 
+    pName = PyString_FromString("python/histogram_rebinning"); 
     pModule = PyImport_Import(pName);
     if(pModule == NULL){
       PyErr_Occurred();

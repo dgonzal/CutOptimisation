@@ -54,8 +54,6 @@ size_t TrivialTree::GetEntry(size_t i){
     return res;
 }
 
-
-
 namespace{
 
   void merge(TDirectory * lhs, TDirectory * rhs){

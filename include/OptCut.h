@@ -1,14 +1,22 @@
 #pragma once 
 
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <vector>
+#include <string>
+
+#include "include/obs_selection.h"
+
 struct opt_event{
-    float weight;
-    enum e_type{
-        // we need to distinguish the event type for some reweighting techniques ...
-        signal, ttbar_bkg, other_bkg
-    };
-    e_type event_type;
-    shared_array<float> data; // make it shared, not scoped so copying of opt_event is possible ...
-    opt_event(size_t n = 0): data(new float[n]){}
+  float weight;
+  enum e_type{
+    // we need to distinguish the event type for some reweighting techniques ...
+    signal, ttbar_bkg, other_bkg
+  };
+  e_type event_type;
+  boost::shared_array<float> data; // make it shared, not scoped so copying of opt_event is possible ...
+  opt_event(size_t n = 0): data(new float[n]){}
 };
 
 // cuts on the opt_event level; apply reweight instead of cut.
@@ -41,7 +49,7 @@ public:
       return result;
     }
   private:
-    vector<boost::shared_ptr<OptCut> > cuts;
+    std::vector<boost::shared_ptr<OptCut> > cuts;
 };
 class MultiCut: public OptCut{
 public:
@@ -94,7 +102,7 @@ public:
       my_cut.pop_back();
     }
   }
-  vector<boost::shared_ptr<OptCut> > cutinfo(){return cuts;} 
+  std::vector<boost::shared_ptr<OptCut> > cutinfo(){return cuts;} 
   virtual double operator()(const opt_event & evt) {
     double result = 0.0;
     for(size_t i=0; i<cuts.size(); ++i){
@@ -110,8 +118,8 @@ public:
     return result;
     }
 private:
-  vector<boost::shared_ptr<OptCut> > cuts;
-  vector<cut_type> my_cut;
+  std::vector<boost::shared_ptr<OptCut> > cuts;
+  std::vector<cut_type> my_cut;
 };
 
 class OrCut: public OptCut{
@@ -121,7 +129,7 @@ public:
     cuts.push_back(cut);
   }
   
-  vector<boost::shared_ptr<OptCut> > cutinfo(){return cuts;}
+  std::vector<boost::shared_ptr<OptCut> > cutinfo(){return cuts;}
     
   virtual double operator()(const opt_event & evt) {
     double result = 0.0;
@@ -131,7 +139,7 @@ public:
     return result;
     }
 private:
-  vector<boost::shared_ptr<OptCut> > cuts;
+  std::vector<boost::shared_ptr<OptCut> > cuts;
 };
 
 class CutInfoCut: public OptCut{
@@ -161,23 +169,23 @@ struct cutinfo{
   e_mode mode;
   pair<double, double> range;
   double stepsize;
-  vector<e_mode> multi_mode;
-  vector<pair<double, double> > multi_range;
-  vector<double> multi_stepsize;
-  shared_ptr<double> cut_threshold;
-  cutinfo(const string & obsname_, const e_mode & mode_, const pair<double, double> & range_, double stepsize_, const shared_ptr<double> & threshold_):
-    obsname(obsname_), mode(mode_), range(range_), stepsize(stepsize_), cut_threshold(threshold_){
+  std::vector<e_mode> multi_mode;
+  std::vector<pair<double, double> > multi_range;
+  std::vector<double> multi_stepsize;
+  boost::shared_ptr<double> cut_threshold;
+cutinfo(const std::string & obsname_, const e_mode & mode_, const std::pair<double, double> & range_, double stepsize_, const boost::shared_ptr<double> & threshold_):
+  obsname(obsname_), mode(mode_), range(range_), stepsize(stepsize_), cut_threshold(threshold_){
   }
 };
 
 struct multi_cutinfo{
   enum e_mode{ cut_gtr, cut_lt };
-  vector<string> obsname;
-  vector<e_mode> mode;
-  vector<pair<double, double> > range;
-  vector<double> stepsize;
-  vector<shared_ptr<double> > cut_threshold;
-  multi_cutinfo(const vector<string> & obsname_, const vector<e_mode> & mode_, const vector<pair<double, double> > & range_, vector<double> stepsize_, const vector<shared_ptr<double> > & threshold_):
+  std::vector<string> obsname;
+  std::vector<e_mode> mode;
+  std::vector<pair<double, double> > range;
+  std::vector<double> stepsize;
+  std::vector<boost::shared_ptr<double> > cut_threshold;
+multi_cutinfo(const std::vector<string> & obsname_, const std::vector<e_mode> & mode_, const std::vector<std::pair<double, double> > & range_, std::vector<double> stepsize_, const std::vector<shared_ptr<double> > & threshold_):
     obsname(obsname_), mode(mode_), range(range_), stepsize(stepsize_), cut_threshold(threshold_){
   }
 };

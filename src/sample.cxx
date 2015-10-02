@@ -1,6 +1,9 @@
 #include "include/sample.h"
 
+#include <sstream>      // std::stringstream
 
+using namespace std;
+using namespace boost;
 
 
 sample::sample(const string & fname_pattern, const string & nickname_, const string & theta_procname_, const obs_selection & obs_sel_): nickname(nickname_), theta_procname(theta_procname_), obs_sel(obs_sel_){

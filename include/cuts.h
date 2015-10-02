@@ -1,6 +1,11 @@
 // cuts on the opt_event level; apply reweight instead of cut.
 
-#include "cutopt.cxx"
+#include "include/obs_selection.h"
+
+#include <boost/shared_ptr.hpp>
+#include <vector>
+#include <string>
+
 
 class OptCut{
 public:
@@ -88,7 +93,7 @@ public:
         return result;
     }
 private:
-    vector<boost::shared_ptr<OptCut> > cuts;
+    std::vector<boost::shared_ptr<OptCut> > cuts;
 };
 
 class OrCut: public OptCut{
@@ -105,7 +110,7 @@ public:
         return result;
     }
 private:
-    vector<boost::shared_ptr<OptCut> > cuts;
+    std::vector<boost::shared_ptr<OptCut> > cuts;
 };
 
 
@@ -121,7 +126,7 @@ public:
             case cutinfo::cut_gtr: result = evt.data[index] > *(info.cut_threshold); break;
             case cutinfo::cut_lt: result = evt.data[index] < *(info.cut_threshold); break;
             default:
-              throw string("logic error in CutInfoCut::operator()");
+              throw std::string("logic error in CutInfoCut::operator()");
         }
         return result?1.0:0.0;
     }

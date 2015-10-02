@@ -2,11 +2,15 @@
 
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
 
+#include "TRandom3.h"
 
-
+#include "include/obs_selection.h"
+#include "OptCut.h"
 
 std::vector<std::string> getMatchingFiles(const std::string & dir, const std::string & pattern){
   namespace fs = boost::filesystem3;
@@ -47,7 +51,7 @@ double gauss(double width,double center=0){
     return rnd.Gaus(center, width);
 }
 
-void randomize_cuts(vector<cutinfo> & cuts){
+void randomize_cuts(std::vector<cutinfo> & cuts){
     for(size_t i=0; i < cuts.size(); ++i){
         double new_value = *(cuts[i].cut_threshold) + gauss(cuts[i].stepsize);
         if(new_value < cuts[i].range.first) new_value = cuts[i].range.first;
@@ -56,8 +60,8 @@ void randomize_cuts(vector<cutinfo> & cuts){
     }
 }
 
-vector<double> vary_bounds(vector<double> up_bounds, vector<double> down_bounds, int which_bound, double width, double down= std::numeric_limits<double>::min(), double up= std::numeric_limits<double>::max()){
-  vector<double> result_vector; 	
+std::vector<double> vary_bounds(std::vector<double> up_bounds, std::vector<double> down_bounds, int which_bound, double width, double down= std::numeric_limits<double>::min(), double up= std::numeric_limits<double>::max()){
+  std::vector<double> result_vector; 	
   double result;
   if(which_bound==0){
     for(unsigned int i=0; i<up_bounds.size();++i){
