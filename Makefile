@@ -1,6 +1,6 @@
 # Short Makefile to compile "root macros"
 
-CXX      = g++ -std=c++11
+CXX      = g++ #-std=c++11
 LINKER   = g++ -o
 TARGET = run 
 
@@ -25,13 +25,13 @@ ROOFITLIBS :=  -L$(call scramtag, roofitcore, LIBDIR) -lRooFit -lRooFitCore -lMi
 ROOFITFLAGS := 
 ROOFITINC :=  -I$(call scramtag, roofitcore, INCLUDE)  
 
-PYTHON_CFLAGS := $(shell python2.6-config --cflags) 
-PYTHONLIBS := $(shell python2.6-config --ldflags)
-PYTHON_INC := -I$(shell python2.6-config --includes)
-PYTHON_LIBPATH := -L$(shell python2.6-config --prefix)/lib
+PYTHON_CFLAGS := $(shell python2.7-config --cflags) 
+PYTHONLIBS := $(shell python2.7-config --ldflags)
+PYTHON_INC := -I$(shell python2.7-config --includes)
+PYTHON_LIBPATH := -L$(shell python2.7-config --prefix)/lib
 
 BOOST_INC := -I$(call scramtag,boost,INCLUDE)
-BOOST_LIB := $(call scramtag,boost,LIB) $(call scramtag,boost_filesystem,LIB) $(call scramtag,boost_regex,LIB) $(call scramtag,boost_python,LIB) boost_iostreams
+BOOST_LIB := $(call scramtag,boost,LIB) $(call scramtag,boost_filesystem,LIB) $(call scramtag,boost_regex,LIB) $(call scramtag,boost_python,LIB) boost_iostreams 
 BOOST_LIB := $(patsubst %,-l%,$(BOOST_LIB)) -L$(call scramtag,boost,LIBDIR)
 
 USERLDFLAGS += $(BOOST_LIB) $(PYTHON_LIBPATH) $(PYTHONLIBS) $(ROOTLIBS) $(ROOFITLIBS)  
@@ -42,17 +42,17 @@ USERINCFLAGS += $(BOOST_INC) $(PYTHON_INC) $(ROOTINC) $(ROOFITINC) -I$(INCDIR)
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
 	@mkdir -p $(BINDIR)	
-	$(LINKER) $@ $(USERLDFLAGS) $(OBJECTS)
+	@$(LINKER) $@ $(USERLDFLAGS) $(OBJECTS)
 	@echo "Linking complete!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cxx
 	@mkdir -p $(OBJDIR)	
-	$(CXX) $< $(USERINCFLAGS) $(USERCXXFLAGS) -c -o $(OBJDIR)/$(notdir $@) 
+	@$(CXX) $< $(USERINCFLAGS) $(USERCXXFLAGS) -c -o $(OBJDIR)/$(notdir $@) 
 	@echo "Compiled "$<" successfully!"
 
 
-.PHONEY: clean
-clean:
+.PHONEY: clean	
+clean:	
 	@rm $(OBJDIR)/*
 	@echo "Cleanup complete!"
 

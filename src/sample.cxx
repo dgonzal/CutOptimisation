@@ -1,79 +1,105 @@
-#include "include/sample.h"
+#include "sample.h"
 
-#include <sstream>      // std::stringstream
+#include "TChain.h"
+
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+
+
+#include <sstream>
 
 using namespace std;
 using namespace boost;
 
-
-sample::sample(const string & fname_pattern, const string & nickname_, const string & theta_procname_, const obs_selection & obs_sel_): nickname(nickname_), theta_procname(theta_procname_), obs_sel(obs_sel_){
-    string path;
-    size_t p = fname_pattern.rfind('/');
-    if(p!=string::npos){
-      path = fname_pattern.substr(0, p);
-    }
-    else p=0;
-    string pattern = fname_pattern.substr(p+1);
-    cout << "sample: using path '" << path << "', pattern '" << pattern << "'. " << flush;
-    vector<string> files = getMatchingFiles(path, pattern);
-    cout << "Found " << files.size() << " file" << (files.size() > 1?"s":"") << flush;
-    TChain * chain = new TChain("CutTree");
-    if(files.size()==0) return;
-    for(size_t i=0; i<files.size(); ++i){
-      chain->AddFile(files[i].c_str());
-    }
-    n_events = chain->GetEntries();
-    cout << " containing " << n_events << " events." << endl;
-    TObjArray* br_list = chain->GetListOfBranches();
-    // build a map (observable index according to obs_sel) -> (index into struct from input file)
-    map<size_t, size_t> obsselindex_to_fileindex;
-    set<string> observables_left;
-    observables_left.insert(obs_sel.observable_names.begin(), obs_sel.observable_names.end());
-    for(int i=0; i<br_list->GetEntries(); ++i){
-      string br_name = br_list->At(i)->GetName();
-      if(observables_left.find(br_name) == observables_left.end()) continue;
-      size_t obsselindex = obs_sel.indexof_obs(br_name);
-      obsselindex_to_fileindex[obsselindex] = i;
-      observables_left.erase(br_name);
-    }
-    if(observables_left.size()>0){
-      stringstream ss;
-      ss << "sample: did not find observables '";
-      for(set<string>::const_iterator it = observables_left.begin(); it!=observables_left.end(); ++it){
-	ss << *it << "' ";
+std::vector<std::string> getMatchingFiles(const std::string & dir, const std::string & pattern){
+  namespace fs = boost::filesystem;
+  boost::regex exp(pattern);
+  boost::regex postfix("root");
+  std::vector<std::string> result;
+  fs::path full_path = fs::complete(fs::path(dir));
+  fs::directory_iterator end_iter;
+  for(fs::directory_iterator dir_itr(full_path); dir_itr != end_iter; ++dir_itr){
+    if(fs::is_regular_file(dir_itr->status())){
+      std::string filename = dir_itr->path().filename().string();
+      if(boost::regex_search(filename, exp) && boost::regex_search(filename, postfix)){
+	result.push_back(dir_itr->path().string());
       }
-      ss << "in fnames " << fname_pattern;
-      throw ss.str();
     }
-    // read the data from the input file and "reshuffle" it into opt_event structure according to the
-    // indices from obs_selection.
-    // Set Directory to all given Variables and Weight.
-    scoped_array<double_t> data(new double_t[obsselindex_to_fileindex.size()]);	
-    float sample_weight = 1.0; //get_sample_weight(sinfo_path, nickname, lumi);
-    events.reset(new opt_event[n_events]);
-    float sum_of_weights = 0;
-    for(unsigned int i=0; i<obsselindex_to_fileindex.size(); ++i){
-      data[i]=98265;
-      chain->SetBranchAddress(br_list->At(obsselindex_to_fileindex[i])->GetName(), &data[i]);
-    }
-    //Fill Variables and weight into memory
-    opt_event::e_type typ = opt_event::other_bkg;
-    if(is_signal()) typ = opt_event::signal;
-    for(size_t ievent=0; ievent < n_events; ++ievent){
-      opt_event evt(obsselindex_to_fileindex.size()+obs_sel.added_names.size());
-      chain->GetEntry(ievent);
-      for(map<size_t, size_t>::const_iterator it=obsselindex_to_fileindex.begin(); it!=obsselindex_to_fileindex.end(); ++it){
-	//cout<<it->first<<" "<<it->second<<" "<<data[it->second]<<" "<<br_list->At(it->second)->GetName() <<endl;
-	evt.data[it->first] = data[it->second];
-      }
-      for(unsigned int m=0; m<obs_sel.added_names.size();++m){
-	evt.data[obsselindex_to_fileindex.size()+m] = case_operation(obs_sel.operation[m],evt.data[obs_sel.indexof(obs_sel.operands[m].first)],evt.data[obs_sel.indexof(obs_sel.operands[m].second)]);
-	//cout<< obs_sel.added_names[m]<<" "<<obs_sel.operands[m].first<<" "<<obs_sel.operands[m].second<<" "<<evt.data[obsselindex_to_fileindex.size()+m]<<endl;
-      }
-      evt.weight = evt.data[obs_sel.indexof("weight")];//w * sample_weight;
-      sum_of_weights += evt.weight;
-      events[ievent] = evt;
-      //print_event(evt,obs_sel );
-    }
-    delete chain;
   }
+  return result;
+}
+
+sample::sample(const string & fname_pattern, const std::vector<std::string> & observables_, const string & TreeName): observables(observables_){
+  string path;
+  size_t p = fname_pattern.rfind('/');
+  if(p!=string::npos){
+    path = fname_pattern.substr(0, p);
+  }
+  else p=0;
+  string pattern = fname_pattern.substr(p+1);
+  std::cout << "sample: using path '" << path << "', pattern '" << pattern << "'. " << std::flush;
+  std::vector<std::string> files = getMatchingFiles(path, pattern);
+  std::cout << "Found " << files.size() << " file" << (files.size() > 1?"s":"") << std::flush;
+  TChain * chain = new TChain(TreeName.c_str());
+  if(files.size()==0) return;
+  for(size_t i=0; i<files.size(); ++i){
+    chain->AddFile(files[i].c_str());
+  }
+  n_events = chain->GetEntries();
+  cout << " containing " << n_events << " events." << endl;
+  TObjArray* br_list = chain->GetListOfBranches();
+  // build a map (observable index according to obs_sel) -> (index into struct from input file)
+  map<size_t, size_t> obsselindex_to_fileindex;
+  set<string> observables_left;
+  observables_left.insert(observables.begin(), observables.end());
+  for(int i=0; i<br_list->GetEntries(); ++i){
+    string br_name = br_list->At(i)->GetName();
+    if(observables_left.find(br_name) == observables_left.end()) continue;
+    vector<string>::iterator p = find(observables.begin(),observables.end(),br_name);
+    obsselindex_to_fileindex[distance(observables.begin(),p)] = i;
+    //cout<<br_name<<" "<<i<<" distance "<<distance(observables.begin(),p) <<endl;
+    observables_left.erase(br_name);
+  }
+  // weight is stored in observables, don't forget the case with unityweight!
+  if((observables_left.size()>0 && !observables[1].empty()) || observables_left.size()>1){
+    stringstream ss;
+    cout << "sample: did not find observables '"<<endl;;
+    for(set<string>::const_iterator it = observables_left.begin(); it!=observables_left.end(); ++it){
+      cout << *it << "' "<<endl;;
+    }
+    cout << "in File " << fname_pattern;
+    throw ss.str();
+  }
+
+  // read the data from the input file and "reshuffle" it data structure according to the
+  // Set Directory to all given Variables and Weight.
+  scoped_array<double_t> data(new double_t[obsselindex_to_fileindex.size()]);	
+  for(unsigned int i=0; i<obsselindex_to_fileindex.size(); ++i){
+    data[i]=98265;
+    if(observables[i].empty())continue;
+    chain->SetBranchAddress(br_list->At(obsselindex_to_fileindex[i])->GetName(), &data[i]);
+  }
+  cout<<" starting to read in"<<endl;
+  //Fill Variables into memory
+  // resize to the needed size not to waste time allocating new memory several times
+  // first to the number of needed observables and then to the entries
+  observablesValues.resize(observables.size(),vector<double>(n_events));
+  int percent_fraction = n_events/10;
+  for(size_t ievent=0; ievent < n_events; ++ievent){
+    chain->GetEntry(ievent);
+    //Where the data gets into my memory ?
+    for(map<size_t, size_t>::const_iterator it=obsselindex_to_fileindex.begin(); it!=obsselindex_to_fileindex.end(); ++it){
+      //cout<<it->first<<" second "<<it->second<<endl;
+      if(!observables[it->first].empty())
+	observablesValues[it->first][ievent] = data[it->first];
+      else
+	observablesValues[it->first][ievent] = 1;
+      if(ievent%percent_fraction==0){
+	//cout<<it->first<<" "<<it->second<<" "<<data[it->first]<<" "<<br_list->At(it->second)->GetName() <<" event # "<< ievent<<endl;
+	cout<<"\r"<<"Percent done: "<<(ievent*100)/(n_events-1)<<flush;
+      }
+    }
+  }
+  cout << std::endl; // all done
+  delete chain;
+}
