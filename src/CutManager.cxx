@@ -15,7 +15,8 @@ bool CutManager::add_Cut(string nick, string cutname, vector<string> parameters)
       numberOfSteps+=1;
       cout<<"number of steps is not an int, going one step beyond"<<endl;
     }   
-    cutStore.push_back(new CutSmaller(step,min,max,int(numberOfSteps)));
+    numberOfSteps++;
+    cutStore.insert(cutStore.begin()+find_position(numberOfSteps), new CutSmaller(step,min,max,int(numberOfSteps)));
     scan_permutations*=numberOfSteps;
     return true;
   }
@@ -29,7 +30,8 @@ bool CutManager::add_Cut(string nick, string cutname, vector<string> parameters)
       numberOfSteps+=1;
       cout<<"number of steps is not an int, going one step beyond"<<endl;
     }
-    cutStore.push_back(new CutGreater(step,min,max,int(numberOfSteps)));
+    numberOfSteps++;
+    cutStore.insert(cutStore.begin()+find_position(numberOfSteps),new CutGreater(step,min,max,int(numberOfSteps)));
     scan_permutations*=numberOfSteps;
     return true;
   }
@@ -43,13 +45,14 @@ bool CutManager::check_Cut(int cuti, double val){
 }
 void CutManager::permute_Cuts(int cuti){
   for(unsigned int p=0; p < cutStore.size(); p++){
-    int result = cuti;
+    double result = double(cuti);
+    //cout<<result<< " ";
     for(unsigned int i=0; i <= p; i++){
-      if(i<p) result/=cutStore[p]->get_numberOfSteps();
+      if(i<p) result/=double(cutStore[p]->get_numberOfSteps());
       if(p==i)result = int(result)%cutStore[p]->get_numberOfSteps();
     }
     //cout<< "Cut "<<p+1<< " Result: " <<result<<" ";
-    cutStore[p]->set_counter(result);
+    cutStore[p]->set_counter(int(result));
   }
   //cout<<endl;
 }
@@ -59,6 +62,16 @@ string CutManager::get_OuputName(){
     //cout<<cutNicks[i] +"_"+ cutStore[i]->get_CutValues()<<endl;;
     if(i>0) result+= "_";
     result+= cutNicks[i] +"_"+ cutStore[i]->get_CutValues();
+  }
+  return result;
+}
+
+
+int CutManager::find_position(int NumberOfSteps){
+  int result =0;
+  for(unsigned int i=1; i<cutStore.size()+1; i++){
+    if(cutStore.size()>i+1 && cutStore[i-1]->get_numberOfSteps() > NumberOfSteps && cutStore[i-1]->get_numberOfSteps() < NumberOfSteps) result = i;
+    if(cutStore.size()<i+1 && cutStore[i-1]->get_numberOfSteps() > NumberOfSteps) result = i;
   }
   return result;
 }

@@ -100,7 +100,7 @@ def computeBinning(histogram, rerror):
 
 import array
 
-def binFile(rerror, filename, xtitle, backgrounds): 
+def binFile(rerror, filename, backgrounds): 
     file = TFile(filename)
     keys = file.GetListOfKeys()
 
@@ -177,7 +177,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         labelcms.SetMargin(0.12);
         labelcms.SetFillColor(10);
         labelcms.SetBorderSize(0);
-        labelcms.SetHeader('CMS Preliminary #sqrt{s} = 8 TeV')
+        labelcms.SetHeader('CMS Preliminary #sqrt{s} =  TeV')
         labelcms.Draw()
 
         labellumi = TLegend(.73, .91, 1, .96)

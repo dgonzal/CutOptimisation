@@ -10,7 +10,7 @@ configInfo::configInfo(const boost::property_tree::ptree & configTree){
   path = "";
   weight = "";
   for (auto& section : configTree){
-    std::cout << '[' << section.first << "]\n";
+    //std::cout << '[' << section.first << "]\n";
     for (auto& key : section.second){
       if(section.first == "CutScan"){
 	cutInfo new_cut;
@@ -54,7 +54,7 @@ configInfo::configInfo(const boost::property_tree::ptree & configTree){
 	if(key.first=="Weight") weight = key.second.get_value<std::string>();
       }
 
-      std::cout << key.first << " = " << key.second.get_value<std::string>() << "\n";
+      //std::cout << key.first << " = " << key.second.get_value<std::string>() << "\n";
     }
   }
   std::cout<<"Config read in finished"<<std::endl;
@@ -83,6 +83,9 @@ std::vector<std::string> configInfo::get_SampleInformation(int option){
   else if(option==1)
     for(auto & sample : samples)
       names.push_back(sample.nick);
+  else if(option==2)
+    for(auto & sample : samples)
+      if(sample.sampleType==0)names.push_back(sample.nick);
   return names;
 }
 
