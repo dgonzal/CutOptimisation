@@ -28,7 +28,7 @@ class CutManager {
  private:
   std::vector<Cut*> cutStore;
   std::vector<std::string> cutNicks;
-  int scan_permutations;
-  int find_position(int NumberOfSteps);
+  unsigned int scan_permutations;
+  unsigned int find_position(unsigned int NumberOfSteps);
 };
 

@@ -9,6 +9,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/progress.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -71,26 +72,21 @@ bool run_theta(configInfo & config, vector<sample> & samples){
     ThetaHists.hists.push_back(new TH1D((config.get_Observable()+"__"+sampleName).c_str(),sampleName.c_str(),config.get_PlotInfo().bins,config.get_PlotInfo().min,config.get_PlotInfo().max));
   }
   cout<<" number of scanned cuts "<<numberOfCuts<<" total number of points "<<ScanCuts.get_NumberScanPoints()<<endl;
+  boost::progress_display show_progress(ScanCuts.get_NumberScanPoints());
   for(int p =0; p<ScanCuts.get_NumberScanPoints(); p++){
+    ScanCuts.permute_Cuts(p);
     int i =0;
     //cout<<int(p%10)<<" "<<int((p/10)%20)<<endl;
     for(auto & sample : samples){
-      int fail=0 ,pass=0;
       for(int m = 0; m< sample.get_NumberEvents(); m++){
 	bool passCuts = true;
-	int frac_samp = int(double(m)/double(sample.get_NumberEvents())*100);
-	if(frac_samp%10)cout<<"\r"<<"Scan Progress [%] "<<int(double(p)/double(ScanCuts.get_NumberScanPoints())*100) <<" "<<ScanCuts.get_OuputName() <<" "<<config.get_Samples()[i].nick<<" [%]: "<<frac_samp<<flush;// " pass "<< pass << " fail "<<fail<<flush;
-	unsigned int it = 0;
-	do{
+	//int frac_samp = int(double(m)/double(sample.get_NumberEvents())*100);
+	//if(frac_samp%10)cout<<"\r"<<"Scan Progress [%] "<<int(double(p)/double(ScanCuts.get_NumberScanPoints())*100) <<" "<<ScanCuts.get_OuputName() <<" "<<config.get_Samples()[i].nick<<" [%]: "<<frac_samp<<flush;// " pass "<< pass << " fail "<<fail<<flush;
+	for(unsigned int it =0; it <numberOfCuts; it++){
 	  passCuts = ScanCuts.check_Cut(it, sample.get_Value(m,it+2));
-	  it++;
-	}while(it<numberOfCuts && passCuts==true);
-	if(passCuts){
-	  pass++;
-	  ThetaHists.hists[i]->Fill(sample.get_Value(m,0),sample.get_Value(m,1));
+	  if(!passCuts) break;
+	  if(it+1==numberOfCuts)ThetaHists.hists[i]->Fill(sample.get_Value(m,0),sample.get_Value(m,1));
 	}
-	else
-	  fail++;
       }
       i++; 
     }
@@ -106,11 +102,11 @@ bool run_theta(configInfo & config, vector<sample> & samples){
       myInfo.compareValue *=it->second;
     }
     out<<endl;
-    if(p<10) best_results.push_back(myInfo);
+    if(p<5) best_results.push_back(myInfo);
     else{
       int position = -1;
       double distance = 0;
-      for(unsigned int ip = 0; ip < 10;ip++){
+      for(unsigned int ip = 0; ip < 5;ip++){
 	if(myInfo.compareValue<best_results[ip].compareValue && distance < fabs(myInfo.compareValue-best_results[ip].compareValue)){
 	  position = ip;
 	  distance = fabs(myInfo.compareValue-best_results[ip].compareValue);
@@ -119,7 +115,7 @@ bool run_theta(configInfo & config, vector<sample> & samples){
       if(position != -1)best_results[position]= myInfo;
     }		   
     ThetaHists.reset_Hists();
-    ScanCuts.permute_Cuts(p);
+    ++show_progress;
   }
   out<<"================================================================="<<endl;
   for(auto & result: best_results){
@@ -128,6 +124,7 @@ bool run_theta(configInfo & config, vector<sample> & samples){
       out<<number<<" ";
     out<<endl;
   }
+  
   out.close();
   return true;
 }

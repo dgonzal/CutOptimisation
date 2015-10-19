@@ -17,7 +17,7 @@ configInfo::configInfo(const boost::property_tree::ptree & configTree){
 	new_cut.nick = key.first;
 	string completeInfo =  key.second.get_value<std::string>();
 	boost::split(new_cut.info,completeInfo,boost::is_any_of("\t "));
-	std::cout<<new_cut.info[0]<<std::endl;
+	//std::cout<<new_cut.info[0]<<std::endl;
 	cuts.push_back(new_cut);
 	}
       if(section.first == "Signal" || section.first == "Background"){

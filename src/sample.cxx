@@ -94,12 +94,14 @@ sample::sample(const string & fname_pattern, const std::vector<std::string> & ob
 	observablesValues[it->first][ievent] = data[it->first];
       else
 	observablesValues[it->first][ievent] = 1;
+      /*
       if(ievent%percent_fraction==0){
 	//cout<<it->first<<" "<<it->second<<" "<<data[it->first]<<" "<<br_list->At(it->second)->GetName() <<" event # "<< ievent<<endl;
 	cout<<"\r"<<"Percent done: "<<(ievent*100)/(n_events-1)<<flush;
       }
+      */
     }
   }
-  cout << std::endl; // all done
+  //cout << std::endl; // all done
   delete chain;
 }

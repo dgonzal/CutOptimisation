@@ -15,7 +15,7 @@ class Cut{
  public: 
   Cut(int numberOfSteps_);
   //~Cut();
-  void next_Cut(){counter++;}
+  ///void next_Cut(){counter++;}
   void set_counter(int counter_){counter=counter_;}
   int get_counter(){return counter;}
   int get_numberOfSteps(){return numberOfSteps;}
