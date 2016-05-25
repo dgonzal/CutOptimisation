@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-def model(fname, write_report = True):
+def model(fname, write_report = False):
     model = build_model_from_rootfile(fname)
 #    model.scale_predictions(5.0 / 1.1)
     model.fill_histogram_zerobins()
-    model.set_signal_processes('Bbt*LH*')
+    model.set_signal_processes('Bpb*RH*')
     for p in model.processes:
         model.add_lognormal_uncertainty('lumi', math.log(1.044), p)
      
-    model.add_lognormal_uncertainty('zj_rate', math.log(2.0), 'zjets')
+    model.add_lognormal_uncertainty('zj_rate', math.log(1.0), 'zjets')
     model.add_lognormal_uncertainty('wj_rate', math.log(1.5), 'wjets')
-    #model.add_lognormal_uncertainty('qcd_rate', math.log(2.0), 'qcd')
+    model.add_lognormal_uncertainty('qcd_rate', math.log(2.0), 'qcd')
     model.add_lognormal_uncertainty('ttbar_rate', math.log(1.5), 'ttbar')
     model.add_lognormal_uncertainty('singletop_rate', math.log(1.5), 'singletop')
 

@@ -18,7 +18,7 @@ class Cut{
   ///void next_Cut(){counter++;}
   void set_counter(int counter_){counter=counter_;}
   int get_counter(){return counter;}
-  int get_numberOfSteps(){return numberOfSteps;}
+  unsigned int get_numberOfSteps(){return numberOfSteps;}
   virtual const std::string get_CutValues();
   virtual bool passes(double eventValue);
  private:
@@ -47,3 +47,11 @@ class CutSmaller: public Cut {
   double step, min, max;
 };
 
+class CutExact: public Cut {
+ public:
+  CutExact(double step_, double min_, double max_, double numberOfSteps_);
+  bool passes(double eventValue);
+  const std::string get_CutValues();
+ private:
+  double step, min, max;
+};

@@ -38,16 +38,26 @@ inline bool rebinning(const std::string & theta_fname, const std::vector<std::st
   return true;
 }
 
-// return the expected limits by running theta, as map from zprime mass to limit in pb.
-inline std::map<std::string, double> expected_limits(const std::string theta_dir, const std::string & theta_rootfile){
+// return the expected limits by running theta
+inline std::map<std::string, double> expected_limits(const std::string & modelDir, const std::string theta_dir, const std::string & theta_rootfile, const std::string & backgrounds ="", const std::string & binningDir ="", const std::string & id=""){
+  std::string anaName = "analysis"+id+".py";
   std::map<std::string, double> result;
-  std::ofstream ta("analysis.py");
-  ta << "execfile(\"../python/model.py\")" << std::endl;
-  ta << "model(\"" << theta_rootfile << "\")" << std::endl;
+  std::ofstream ta(anaName);
+  if(!binningDir.empty() && !backgrounds.empty()){
+    std::size_t position_appendix = theta_rootfile.find(".root");
+    ta << "execfile(\""<<binningDir<<"\")"<<std::endl;
+    ta << "binFile(0.3,'"+theta_rootfile+"', 'M_{B} [GeV/c^{2}]',["+backgrounds+"])"<<std::endl;
+    ta << "execfile(\""<<modelDir <<"\")" << std::endl;
+    ta << "model(\"" << theta_rootfile.substr(0,position_appendix)+"_rebinned.root" << "\")" << std::endl;
+  }
+  else{
+    ta << "execfile(\""<<modelDir <<"\")" << std::endl;
+    ta << "model(\"" << theta_rootfile << "\")" << std::endl;
+  }
   ta.close();
-    
   //run theta-auto:
-  char * const args[] = {"analysis.py", 0};
+  char * const arg_char = (char *)anaName.data();
+  char * const args[] = {arg_char, 0};
   ProgramWrapper theta_auto((theta_dir + "/utils2/theta-auto.py").c_str(), args);
   theta_auto.read_until_line("expected limit");
   for(size_t i=0; i<100; ++i){

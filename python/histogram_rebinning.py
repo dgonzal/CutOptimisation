@@ -8,6 +8,8 @@ ROOT.gROOT.SetStyle("Plain")
 ROOT.gROOT.SetBatch()
 ROOT.gStyle.SetOptStat(000000000)
 ROOT.gStyle.SetOptTitle(0)
+ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 3000;")
+
 
 from ROOT import TCanvas, TFile, TH1, THStack, TLegend
 
@@ -100,7 +102,7 @@ def computeBinning(histogram, rerror):
 
 import array
 
-def binFile(rerror, filename, backgrounds): 
+def binFile(rerror, filename, xtitle, backgrounds): 
     file = TFile(filename)
     keys = file.GetListOfKeys()
 
@@ -139,6 +141,7 @@ def binFile(rerror, filename, backgrounds):
        
         h_bkg[key].SetLineColor(ROOT.kGray+1)
         h_bkg[key].SetFillColor(ROOT.kGray+1)
+        h_bkg[key].GetXaxis().SetTitle(xtitle)
         #h_data[key].SetLineColor(ROOT.kBlack)  
         #h_data[key].SetMarkerStyle(20)
 
@@ -209,8 +212,6 @@ def binFile(rerror, filename, backgrounds):
                 if (info.systematic == 'scale' or info.systematic == 'matching') and 'light' in info.process and '1btag' in info.channel:
                     print "Excluding : ", info.systematic, info.process, info.channel
                     continue
-                if 'data' in info.process:
-                    histogram.SetName(histogram.GetName().replace('data','DATA'))
                 if 'ttbar' in info.process and info.systematic == 'scale':
                     orig = histogram.GetName()
                     histogram.SetName(histogram.GetName().replace('scale','scale_ttbar'))
@@ -231,6 +232,7 @@ def binFile(rerror, filename, backgrounds):
                 histogram = histogram.Rebin(len(binning)-1, histogram.GetName(), binning)
                 output.cd()
                 histogram.Write()
+                
 
 
 #binFile(0.3, 'boosted_semileptonic_electron_interpolated.root', 'M_{t#bar{t}} [GeV/c^{2}]', ['ttbar', 'wlight', 'wc', 'wb', 'zlight', 'singletop', 'diboson'])

@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/filesystem.hpp>
 
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@ struct cutInfo{
   }
 };
 struct obsInfo{
+  std::string name;
   int bins;
   double min;
   double max;
@@ -36,8 +38,7 @@ class configInfo {
   enum optimisation_method{Theta};
   void printConfig();
   const std::string & get_Workdir(){return workdir;}
-  const obsInfo & get_PlotInfo(){return observablePlotInfo;}
-  const std::string & get_Observable(){return observable;}
+  const std::vector<obsInfo> & get_PlotInfo(){return observablePlotInfo;}
   const std::string & get_ThetaDir(){return ThetaDir;}
   const std::string & get_ThetaModelDir(){return ThetaModelDir;}
   std::vector<sampleInfo> get_Samples(){return samples;}
@@ -45,17 +46,20 @@ class configInfo {
   std::vector<std::string> get_Variables();
   std::vector<cutInfo> get_Cuts(){return cuts;}
   const std::string & get_Path(){return path;}
+  const std::vector<std::string> & get_Sys(){return sys;}
+  const std::string & get_Rebinning(){return rebinning_script;} 
   //optimisation_method get_Method(){return optiMethod}
  private:
   optimisation_method optiMethod;
   std::string path;
   std::string workdir;
-  std::string observable;
-  obsInfo observablePlotInfo;
+  std::vector<obsInfo> observablePlotInfo;
   std::string weight;
   std::string ThetaDir;
   std::string ThetaModelDir;
   std::vector<sampleInfo> samples;
   std::vector<cutInfo> cuts;
+  std::vector<std::string> sys; 
+  std::string rebinning_script="";
 }; 
 

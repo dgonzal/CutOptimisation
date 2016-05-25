@@ -5,8 +5,10 @@
 using namespace std;
 
 configInfo::configInfo(const boost::property_tree::ptree & configTree){
-  std::cout<<"Current Configuration:"<<std::endl;
-  workdir = "./workdir";
+  auto cwd  = boost::filesystem::current_path();
+  //std::cout<<"Current Configuration:"<<std::endl;
+  //cout<<cwd.string()<<endl;
+  workdir = "workdir";
   path = "";
   weight = "";
   for (auto& section : configTree){
@@ -32,38 +34,78 @@ configInfo::configInfo(const boost::property_tree::ptree & configTree){
       }
       if(section.first == "Setup"){
 	if(key.first=="SamplePath") path =  key.second.get_value<std::string>();
-	if(key.first=="Model") ThetaModelDir = key.second.get_value<std::string>();
+	if(key.first=="Model"){
+	  ThetaModelDir = key.second.get_value<std::string>();
+	  if(!boost::filesystem::exists(ThetaModelDir)){ 
+	    ThetaModelDir = cwd.string()+"/"+ThetaModelDir;
+	    /*//This does not work on the bird cluster, why not ????
+	    if(boost::filesystem::exists(cwd.string()+"/"+ThetaModelDir))
+	      
+	    else{
+	      cerr<<"ThetaModelDir not found "<<ThetaModelDir<<endl;
+	      cerr<<"ThetaModelDir not found "<<cwd.string()+"/"+ThetaModelDir<<endl;
+	      abort();
+	      }*/
+	     //cout<<ThetaModelDir<<endl;
+	  }
+	}
+	if(key.first=="RebinningScript"){
+	  rebinning_script = key.second.get_value<std::string>();
+	  if(!boost::filesystem::exists(rebinning_script)){ 
+	    rebinning_script = cwd.string()+"/"+rebinning_script;
+	    /*//This does not work on the bird cluster, why not ????
+	    if(boost::filesystem::exists(cwd.string()+"/"+rebinning_script))
+	      rebinning_script = cwd.string()+"/"+rebinning_script;
+	    else{
+	      cerr<<"RebinningScript not found "<<rebinning_script<<endl;
+	      abort();
+	      }*/
+	  }
+	}
 	if(key.first=="Observable"){ 
 	  std::vector<std::string> info;
 	  string mykey = key.second.get_value<std::string>();
 	  boost::split(info,mykey,boost::is_any_of("\t "));
-	  observable = info[0];
-	  if(info.size()>3){
-	    observablePlotInfo.bins = stoi(info[1]);
-	    observablePlotInfo.min = stod(info[2]);
-	    observablePlotInfo.max = stod(info[3]);
+	  if(info.size()%4!=0){
+	    cout<<"wrong number of arguments provided for the plots"<<endl;
+	    assert(1==0);
 	  }
-	  else{
-	    observablePlotInfo.bins = 0;
-	    observablePlotInfo.min = 0;
-	    observablePlotInfo.max = 0;
+	  for(unsigned int i=0; i<info.size(); i = i+4){
+	    obsInfo myStorageInfo;
+	    myStorageInfo.name = info[i];
+	    myStorageInfo.bins = stoi(info[i+1]);
+	    myStorageInfo.min = stod(info[i+2]);
+	    myStorageInfo.max = stod(info[i+3]);
+	    observablePlotInfo.push_back(myStorageInfo);
 	  }
 	}
 	if(key.first=="Theta") ThetaDir = key.second.get_value<std::string>();
 	if(key.first=="Workdir") workdir = key.second.get_value<std::string>();
 	if(key.first=="Weight") weight = key.second.get_value<std::string>();
+	if(key.first=="Systematics"){
+	  string sysinfo = key.second.get_value<std::string>();
+	  boost::split(sys,sysinfo,boost::is_any_of("\t "));
+	}
       }
-
       //std::cout << key.first << " = " << key.second.get_value<std::string>() << "\n";
     }
   }
+  if(boost::contains(ThetaModelDir,workdir)){
+    ThetaModelDir.erase(ThetaModelDir.find(workdir),workdir.size());
+  }
+   if(boost::contains(rebinning_script,workdir)){
+    rebinning_script.erase(rebinning_script.find(workdir),workdir.size());
+  }
+  
+
   std::cout<<"Config read in finished"<<std::endl;
   std::cout<<"=========================="<<std::endl;
 }
 
 void configInfo::printConfig(){
   std::cout<<"Following Setup was read in:"<<endl;
-  std::cout<<"Observable: "<<observable<<" Histogram Binning: "<<observablePlotInfo.bins<< " Min/Max "<<observablePlotInfo.min<<"/"<<observablePlotInfo.max<<endl;
+  for(auto & info : observablePlotInfo)
+    std::cout<<"Observable: "<<info.name<<" Histogram Binning: "<<info.bins<< " Min/Max "<<info.min<<"/"<<info.max<<endl;
   std::cout<<"Weight: "<<weight<<endl;
   std::cout<<"Workdir: "<<workdir<<endl;
   std::cout<<"Thera Dir: "<<ThetaDir<<endl;
@@ -83,20 +125,24 @@ std::vector<std::string> configInfo::get_SampleInformation(int option){
   else if(option==1)
     for(auto & sample : samples)
       names.push_back(sample.nick);
-  else if(option==2)
+  else if(option==2){
     for(auto & sample : samples)
       if(sample.sampleType==0)names.push_back(sample.nick);
+  }
+  else if(option==3)
+    for(auto & sample : samples)
+      if(sample.sampleType==1)names.push_back(sample.nick);
   return names;
 }
 
 std::vector<std::string> configInfo::get_Variables(){
   vector<string> var;
-  string myobs = observable; string myweight = weight;
-  var.push_back(myobs);
+  for(auto & info : observablePlotInfo)
+    var.push_back(info.name);
+  string myweight = weight;
   var.push_back(weight);
   for(auto & cut : cuts){
     var.push_back(cut.variable());
   }
   return var;
 }
-
